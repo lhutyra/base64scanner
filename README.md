@@ -70,7 +70,7 @@ entropy=5.25
 0000000000000000: 88 46 04 00 11 02 00 06-05 02 56 27 BA E1 00 0A ".F........V'...."
 0000000000000010: 09 10 46 18 14 33 FB B7-54 51 CF E6 00 A0 95 A7 "..F..3..TQ......"
 0000000000000020: 49 B7 F4 55 8D A5 99 1B-97 FB 57 72 66 6F D7 FE "I..U......Wrfo.."
-binary file saved to buf_2_1118316288.dat
+binary file saved to buf_7f59fd79eef0476a.dat
 found at:
 fname=ubuntu-15.10-desktop-i386.iso pos=2762818 (0x2a2842)
 fname=ubuntu-15.10-desktop-i386.iso pos=2762883 (0x2a2883)
