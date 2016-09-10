@@ -34,6 +34,7 @@ int max_block=102400;
 
 int ascii_only=0;
 int _2n_size_only=0;
+int skip_padding_checks=0;
 
 rbtree *tree;
 
@@ -58,10 +59,17 @@ int compare_key(void* vl, void* vr)
 {
 	struct key *l = (struct key*)vl;
 	struct key *r = (struct key*)vr;
+	
 	if (r->hash < l->hash)
 		return -1;
-	if (r->size < l->size)
+	if (r->hash > l->hash)
 		return 1;
+	
+	if (r->size < l->size)
+		return -1;
+	if (r->size > l->size)
+		return 1;
+
 	oassert(l->hash==r->hash);
 	oassert(l->size==r->size);
 	return 0;
@@ -89,7 +97,7 @@ void visitor(void* k, void* v)
 	struct val *val=v;
 		
 	printf ("\n");
-	printf ("*** CRC64=0x%" PRIx64 " size=%" PRId64 "\n", key->hash, key->size);
+	printf ("*** CRC64=0x%" PRIx64 " size=%zu\n", key->hash, key->size);
 
 	printf ("base64=\"");
 	fprint_shrinked_string (key->base64, 100, stdout);
@@ -107,7 +115,7 @@ void visitor(void* k, void* v)
 
 	do
 	{
-		printf ("fname=%s pos=%" PRId64 " (0x%" PRIx64 ")\n", val->fname, val->pos, val->pos);
+		printf ("fname=%s pos=%zu (0x%zx)\n", val->fname, val->pos, val->pos);
 		val=val->next;
 	}
 	while (val);
@@ -115,10 +123,9 @@ void visitor(void* k, void* v)
 
 void try_to_decode (char* fname, size_t pos, char *s, size_t size /* of base64 string */)
 {
-	//printf ("%s(size=%d)\n", __FUNCTION__, size);
-	//printf ("s=%.*s\n", size, s);
+	//printf ("%s(pos=0x%zx size=%zu)\n", __FUNCTION__, pos, size);
 
-	if (size&3) // base64 string size should be multiple of 4 (incl. padding, if present)
+	if (skip_padding_checks==0 && size&3) // base64 string size should be multiple of 4 (incl. padding, if present)
 		return;
 
 	char *tmp=DSTRNDUP(s, size, "base64");
@@ -261,11 +268,12 @@ int main(int argc, char* argv[])
 		int option_index = 0;
 		static struct option long_options[] =
 		{
-			{"max-block",      required_argument, 0,              0 },
-			{"min-block",      required_argument, 0,              0 },
-			{"limit-to-ascii", no_argument,       &ascii_only,    1 },
-			{"2n-size-only",   no_argument,       &_2n_size_only, 1 },
-			{0,                0,                 0,              0 }
+			{"max-block",		required_argument,	0,			0 },
+			{"min-block",		required_argument,	0,			0 },
+			{"limit-to-ascii",	no_argument,		&ascii_only,		1 },
+			{"2n-size-only",	no_argument,		&_2n_size_only,		1 },
+			{"skip-padding-checks",	no_argument,		&skip_padding_checks,	1 },
+			{0,			0,			0,			0 }
 		};
 
 		c = getopt_long(argc, argv, "",	long_options, &option_index);
@@ -313,10 +321,11 @@ int main(int argc, char* argv[])
 		printf ("Usage: base64scanner [options] file1 [file2] [file3] ...\n");
 		printf ("\n");
 		printf ("Options:\n");
-		printf ("\t--min-block <number>: skip short blocks. size in bytes (decoded).\n");
-		printf ("\t--max-block <number>: limit length of block. size is also in bytes (decoded).\n");
-		printf ("\t--limit-to-ascii    : suppress binary blocks, dump only those containing ASCII strings.\n");
-		printf ("\t--2n-size-only      : all blocks must have 2^n size (i.e., 2, 4, 8, 16, ...).\n");
+		printf ("\t--min-block <number>  : skip short blocks. size in bytes (decoded).\n");
+		printf ("\t--max-block <number>  : limit length of block. size is also in bytes (decoded).\n");
+		printf ("\t--limit-to-ascii      : suppress binary blocks, dump only those containing ASCII strings.\n");
+		printf ("\t--2n-size-only        : all blocks must have 2^n size (i.e., 2, 4, 8, 16, ...).\n");
+		printf ("\t--skip-padding-checks : padding symbols are not checked.\n");
 		printf ("\n");
 		printf ("Filemask instead of filename is OK, it can be '*' or '*.exe', etc\n");
 		printf ("\n");
